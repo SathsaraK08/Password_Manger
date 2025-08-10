@@ -1,6 +1,62 @@
+# Environment files
 .env
-.DS_Store
-__pycache__/
-*.pyc
-vault.db
+.env.local
 .env.example
+
+# System files
+.DS_Store
+.DS_Store?
+**/.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Python files
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.pyc
+*.pyo
+*.pyd
+
+# Database files
+vault.db
+*.db
+*.sqlite
+*.sqlite3
+
+# Virtual environment
+venv/
+.venv/
+env/
+.env/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Docker files (optional - you might want to track these)
+# .dockerignore
+
+# Logs
+*.log
+logs/
+
+# OS generated files
+.directory
+*~
+
+# Backup files
+*.bak
+*.backup
+*.tmp
