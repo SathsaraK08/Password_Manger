@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Audit Log</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="container mt-4">
+      <button class="btn btn-link" onclick="history.back()">&larr; Back</button>
+      <h3>Audit Log</h3>
+      <div class="table-responsive mt-3">
+        <table class="table table-striped" id="auditTable">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>User ID</th>
+              <th>Action</th>
+              <th>Credential ID</th>
+              <th>Timestamp</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div id="message" class="alert d-none" role="alert"></div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      const API_BASE = 'http://localhost:8000';
+      const token = localStorage.getItem('token');
+      const role = localStorage.getItem('role');
+      if (!token || role !== 'admin') {
+        window.location.href = 'index.html';
+      }
+      function showMessage(msg, isError) {
+        const msgDiv = document.getElementById('message');
+        msgDiv.textContent = msg;
+        msgDiv.classList.remove('d-none');
+        msgDiv.classList.remove('alert-success', 'alert-danger');
+        msgDiv.classList.add(isError ? 'alert-danger' : 'alert-success');
+      }
+      async function loadAudit() {
+        try {
+          const response = await fetch(`${API_BASE}/auditlogs`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          const data = await response.json();
+          if (!response.ok) {
+            throw new Error(data.detail || 'Failed to load logs');
+          }
+          const tbody = document.querySelector('#auditTable tbody');
+          tbody.innerHTML = '';
+          data.forEach((log) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td>${log.id}</td>
+              <td>${log.user_id}</td>
+              <td>${log.action}</td>
+              <td>${log.credential_id ?? ''}</td>
+              <td>${new Date(log.timestamp).toLocaleString()}</td>
+            `;
+            tbody.appendChild(tr);
+          });
+        } catch (err) {
+          showMessage(err.message, true);
+        }
+      }
+      loadAudit();
+    </script>
+  </body>
+</html>
