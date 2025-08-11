@@ -5,3 +5,6 @@ __pycache__/
 vault.db
 .env.example
 .conda/
+.venv/
+venv/
+*.db
