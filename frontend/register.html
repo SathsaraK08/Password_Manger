@@ -74,40 +74,70 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-      const API_BASE = 'http://127.0.0.1:8000';  // localhost is also fine
-    
-      document.getElementById('registerForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const username = document.getElementById('username').value.trim();
-        const password = document.getElementById('password').value;
-        const confirmPassword = document.getElementById('confirmPassword').value;
-        const role = document.getElementById('role').value || 'member';
-    
-        if (password !== confirmPassword) {
-          showError('Passwords do not match');
-          return;
+      const API_BASE = '/api';
+
+      // Elements
+      const form    = document.getElementById('registerForm');
+      const userEl  = document.getElementById('username');
+      const passEl  = document.getElementById('password');
+      const confEl  = document.getElementById('confirmPassword');
+      const alertEl = document.getElementById('errorMessage');
+
+      function showError(msg) {
+        // Normalize msg: it may be a string, array of {msg}, or object
+        let text = 'Unexpected error';
+        if (typeof msg === 'string') {
+          text = msg;
+        } else if (Array.isArray(msg)) {
+          text = msg.map(m => m?.msg || m).join('\n');
+        } else if (msg && typeof msg === 'object') {
+          text = msg.detail || msg.message || JSON.stringify(msg);
         }
-    
+        if (!alertEl) { alert(text); return; }
+        alertEl.textContent = text;
+        alertEl.classList.remove('d-none');
+      }
+      function clearError() {
+        if (!alertEl) return;
+        alertEl.textContent = '';
+        alertEl.classList.add('d-none');
+      }
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        clearError();
+
+        const username = (userEl?.value || '').trim();
+        const password = passEl?.value || '';
+        const confirm  = confEl?.value || '';
+
+        if (!username || !password) return showError('Username and password are required.');
+        if (password !== confirm)   return showError('Passwords do not match.');
+
         try {
           const res = await fetch(`${API_BASE}/auth/register`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },   // <-- ONLY this
-            body: JSON.stringify({ username, password, role })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
           });
-          const data = await res.json();
-          if (!res.ok) throw new Error(data.detail || 'Registration failed');
-          alert('Registration successful! Please log in.');
-          window.location.href = 'index.html';
+
+          const data = await res.json().catch(() => ({}));
+
+          if (!res.ok) {
+            // FastAPI validation returns {detail:[{loc, msg, ...}]} (422)
+            // Other errors might be {detail: '...'}
+            const errorMsg = Array.isArray(data.detail)
+              ? data.detail.map(d => d.msg).join('\n')
+              : (data.detail || `Registration failed (${res.status}).`);
+            return showError(errorMsg);
+          }
+
+          // Success => go to login page with a small flag
+          window.location.href = 'index.html?registered=1';
         } catch (err) {
-          showError(err.message);
+          showError('Network error. Make sure the backend is running.');
         }
       });
-    
-      function showError(msg) {
-        const el = document.getElementById('errorMessage');
-        el.textContent = msg;
-        el.classList.remove('d-none');
-      }
     </script>
   </body>
 </html>
